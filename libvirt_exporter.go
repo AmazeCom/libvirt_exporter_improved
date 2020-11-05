@@ -353,16 +353,17 @@ func CollectDomain(ch chan<- prometheus.Metric, stat libvirt.DomainStats) error 
 		float64(info.State),
 		domainName)
 	// Report block device statistics.
+	BlockLoop:
 	for _, disk := range stat.Block {
 		var DiskSource string
-		if disk.Name == "hdc" {
-			continue
-		}
 		/*  "block.<num>.path" - string describing the source of block device <num>,
 		    if it is a file or block device (omitted for network
 		    sources and drives with no media inserted). For network device (i.e. rbd) take from xml. */
 		for _, dev := range desc.Devices.Disks {
 			if dev.Target.Device == disk.Name {
+				if dev.Device == "cdrom" || dev.Device == "fd" {
+					continue BlockLoop
+				}
 				if disk.PathSet {
 					DiskSource = disk.Path
 
